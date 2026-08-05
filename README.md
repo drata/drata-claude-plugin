@@ -29,6 +29,16 @@ Prompts and a reference to Drata's public MCP endpoint — nothing else. Specifi
 - `plugins/*/shared/*.md` — shared protocols (output, source labelling, write safety)
 - `plugins/*/.mcp.json` — a reference to `https://mcp.drata.com/mcp/`; **no credentials**
 
+### Relationship to Drata's internal marketplace
+
+Each plugin here is an export of the version reviewed internally in `drata/ai-plugins`, at the same
+`version`. The export is byte-identical **except** for `plugins/*/skills/*/evals/` — Drata's internal
+eval specifications — which are deliberately excluded. They describe how Drata tests these skills in
+its own CI and are of no use to an installer.
+
+If you are syncing a new release, that exclusion is the only permitted difference. Anything else
+diverging means the export is stale.
+
 The Drata MCP connector and the API behind it run on Drata infrastructure and are not part of
 this repository. Access is authorized per-user via OAuth at connect time and is bounded by the
 intersection of granted scopes and the user's Drata role.
