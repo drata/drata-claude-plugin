@@ -1,0 +1,34 @@
+{
+  "name": "drata-grc-skills",
+  "version": "3.8.4",
+  "description": "Drata GRC Skills \u2014 17 job-to-be-done skills plus a built-in help index (drata-help) over the Drata MCP, spanning audit readiness, controls, evidence, risk, third-party/vendor risk, workforce compliance, and stakeholder reporting. Every skill is named for the job: report to see it, identify-gaps to find what needs work, resolve-gaps to change it. Bring your own agent (Claude, ChatGPT, Cursor, Copilot).",
+  "author": {
+    "name": "Drata"
+  },
+  "homepage": "https://help.drata.com/en/articles/13379899-drata-mcp-setup-usage-guide",
+  "keywords": [
+    "grc",
+    "compliance",
+    "audit",
+    "soc2",
+    "iso27001",
+    "risk",
+    "vendor",
+    "tprm",
+    "evidence",
+    "controls",
+    "monitoring",
+    "policy",
+    "drata"
+  ],
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json",
+  "userConfig": {
+    "output_mode": {
+      "type": "string",
+      "title": "Output mode",
+      "description": "Drata deliverables render branded by default (Drata palette, Geist type, footer logo) as a designed artifact, or a delivered HTML file on hosts without artifacts. Set 'plain' to always get unbranded plain text instead. You can also just say 'text only' in any conversation.",
+      "default": "styled"
+    }
+  }
+}

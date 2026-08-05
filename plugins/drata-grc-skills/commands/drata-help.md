@@ -1,0 +1,4 @@
+---
+description: List and route the Drata GRC Skills' skills — the catalog grouped by domain.
+---
+Load `${CLAUDE_PLUGIN_ROOT}/skills/drata-help/SKILL.md` and follow it in full — do not summarize or shortcut it. Render branded by default: read `${CLAUDE_PLUGIN_ROOT}/shared/drata-brand-kit.md` and emit the deliverable as a self-contained HTML document using the §3 `.drata` theme — render it via the host artifact tool if one exists, otherwise write the HTML to a `.html` file and send that file. **Never emit the report as chat markdown; there is no markdown fallback.** Never ask the user to pick an output mode. Use unbranded plain text only if the user asked for text-only this session or the plugin's `output_mode` setting is `plain` (see `${CLAUDE_PLUGIN_ROOT}/shared/output-mode.md`). Apply the accuracy-and-sources protocol the skill references. If the user supplied arguments, treat them as scope/context: $ARGUMENTS
