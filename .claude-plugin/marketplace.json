@@ -1,0 +1,16 @@
+{
+  "name": "drata",
+  "owner": {
+    "name": "Drata"
+  },
+  "metadata": {
+    "description": "Drata's official GRC skills for Claude and other MCP-compatible agents."
+  },
+  "plugins": [
+    {
+      "name": "drata-grc-skills",
+      "source": "./plugins/drata-grc-skills",
+      "description": "Drata GRC skills over the Drata MCP — 17 job-to-be-done skills plus a built-in help index (drata-help) spanning audit readiness, controls, evidence, risk, third-party/vendor risk, workforce compliance, and stakeholder reporting. Every skill is named for the job: report to see it, identify-gaps to find what needs work, resolve-gaps to change it."
+    }
+  ]
+}

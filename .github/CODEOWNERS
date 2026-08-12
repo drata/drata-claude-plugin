@@ -1,0 +1,12 @@
+# Drata GRC skills — public marketplace.
+#
+# This repository contains exactly one thing: the customer-facing Drata plugin.
+# Team Interface owns it, so Interface owns every path. Combined with branch
+# protection ("Require review from Code Owners"), this makes Interface approval
+# mandatory on every PR — including the ones opened automatically by the
+# promotion workflow in drata/ai-plugins.
+#
+# Unlike the internal marketplace, enabling code-owner review here has no blast
+# radius: there is no other team's code in this repository to slow down.
+
+* @drata/interface
