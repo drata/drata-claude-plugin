@@ -7,7 +7,7 @@ description: >
   the evidence library', 'assign evidence owners', 'link evidence to DCF-15'. Write access.
 area: Compliance & Audit Readiness
 permission: write (create / update / delete evidence)
-compatibility: "Requires Drata MCP with tools: Drata_listEvidence, Drata_searchControls, Drata_createEvidence, Drata_updateEvidence, Drata_deleteEvidence; Drata_searchMonitoringTests optional (automated-failing context). Requires create/update/delete:evidence scope + a permitting role."
+compatibility: "Requires Drata MCP with tools: Drata_getCompany, Drata_listEvidence, Drata_searchControls, Drata_createEvidence, Drata_updateEvidence, Drata_deleteEvidence; Drata_searchMonitoringTests optional (automated-failing context). Requires create/update/delete:evidence scope + a permitting role."
 ---
 
 **Shared protocols — load these from the plugin root, not the current directory.**
@@ -21,14 +21,22 @@ compatibility: "Requires Drata MCP with tools: Drata_listEvidence, Drata_searchC
      confirmation question itself is never inside the artifact.
    - **The receipt of a batch write of more than 3 rows** — what changed, per-row outcome,
      read-back verification.
+   - **Header identity — the customer's logo, top-left, only when it can truly be inlined; else the company name as text.** Call `Drata_getCompany` once per run before rendering (account-scoped, no arguments, read-only; batch it with the run's other independent reads). It returns `name`, `legalName` and `logoUrl`. Resolve the header in this order and stop at the first that succeeds:
+     1. **Inlined logo — gate first, then fetch, then verify.** Attempt this step only if `logoUrl` is non-empty **and** the host provides a tool that can actually download raw image bytes from an arbitrary URL. Many sandboxed hosts — including Claude's cloud / Cowork environments — forbid fetching arbitrary CDN URLs, and the Drata image CDN additionally refuses generic fetchers; **in those hosts this step fails immediately and silently, and falling through to the name is the designed outcome, not a degraded render.** Where a download is possible: fetch once (no retries, no proxies, no cache mirrors, never a route around a refusal), verify the bytes decode as a real image (image magic bytes, mime `image/*`, non-zero size), base64-encode **those downloaded bytes with a real encoder in this run**, and emit `<img class="cust" src="data:[mime];base64,[data]" alt="[company name]" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="custname" style="display:none">[company name]</div>`. **Never type, reconstruct, or approximate base64 from memory — fabricated image data renders a broken or wrong mark exactly where the customer's identity belongs.** If any part of this step cannot be completed and verified, it did not succeed.
+     2. **Company name as text.** `<div class="custname">[company name]</div>` — used whenever `logoUrl` is absent or empty, no permitted fetch path exists in this host, the fetch fails or is refused, the bytes are not a decodable image, or the base64 cannot be produced from real downloaded bytes. **This fallback is first-class: a report headed by the company's name in clean type is a correct header; a broken image, an empty header, or invented image data is the only failure.**
+     **Never emit `<img src="https://…">`.** A remote reference is not an acceptable third option: artifact sandboxes block external images, and a blocked, expired or access-controlled URL renders a broken-image icon exactly where the customer's identity belongs. It is a verified inlined image or it is the name — nothing in between.
+     **When the logo renders, the company name does not appear as visible text** — it lives in the `alt` attribute and in the hidden `onerror` fallback `<div>`, which stays invisible unless the image fails to decode; that hidden div is the safety net, not a second header.
+     **Proportions: constrain the height, leave the width free.** `height:32px; width:auto; max-width:200px; object-fit:contain` — a wide wordmark and a square icon then share one baseline with no stretching, squashing or cropping. **Never set `height` and `width` together, never `width:100%`, never a fixed pixel width**, and never re-encode the image to a different aspect ratio. If a logo would exceed `max-width` at 32px tall, `object-fit:contain` shrinks it proportionally — that is correct, do not compensate.
+     On the dark board/exec surface, an inlined dark-on-transparent logo disappears; use `<div class="custname" style="color:#fff">[company name]</div>` instead rather than shipping an invisible mark.
    Mini artifact structure: Title naming the operation (`Batch Preview — …` / `Write Receipt — …`)
-   → scope line (workspace/register + timestamp) → hairline → table(s) → footer
+   → scope line (workspace name — or `All workspaces` — plus register where the skill is register-scoped, and timestamp; always spelled out in full, never an id) → hairline → table(s) → footer
    `<div class="foot"><span class="logo">[icon SVG]</span></div>` and nothing else. Table hygiene
    is the shared contract's: ≤6 columns, one fact per cell, numeric cells `.num`, codes `.code`;
    chips only on true per-row outcomes (`chip ok` written / `chip gap` failed). Deliver like every
    other skill: via the host artifact tool if one exists, else write the HTML to a `.html` file
+   named `<skill-name>-<scope>-<YYYY-MM-DD>.html` using this skill's exact folder name
    and send it. Conventions that hold everywhere: no emoji; the word DRATA is plain text; status
-   words are exactly Ready / At-risk / Failing; every ratio uses the word `of` (`55 of 241`),
+   words are exactly Ready / At-risk / Failing; every ratio uses the word `of` (`N of M`),
    never a slash; never invent a severity, score, or verdict Drata does not store.
    - **The footer carries the Drata icon — paste this exact SVG inline** (color `#0F161A` on light surfaces, `#fff` on dark; never an image path, emoji, or substitute glyph): `<span class="logo"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 180.207 130.069" fill="none" role="img" aria-label="Drata"><path d="M 103.38 0 C 148.015 0.025 180.207 25.601 180.207 65.121 C 180.182 104.616 147.966 130.119 103.331 130.069 L 48.81 130.069 L 48.785 130.045 L 83.338 98.542 L 101.782 98.542 C 126.645 98.566 146.073 88.901 146.098 65.071 C 146.122 41.241 126.694 31.552 101.831 31.552 L 83.411 31.552 C 83.316 31.464 49.165 -0.038 48.859 0.246 C 48.859 0.246 48.859 0.021 48.859 0 L 103.38 0 Z M 48.718 30.791 C 58.604 45.595 71.908 55.875 88.409 61.9 L 97.386 65.023 L 88.385 68.122 C 71.883 74.123 59.316 84.403 48.668 99.183 C 38.782 84.378 25.478 74.098 8.977 68.073 L 0 64.95 L 9.001 61.852 C 25.502 55.851 38.832 45.571 48.718 30.791 Z" fill="currentColor" fill-rule="nonzero"/></svg></span>`
    - **Mini theme — a strict subset of the shared `.drata` base theme (same selectors, same values, nothing new); embed once per artifact:**
@@ -41,6 +49,8 @@ compatibility: "Requires Drata MCP with tools: Drata_listEvidence, Drata_searchC
        --positive:#00779C;--warning:#F2C14F;--negative:#D53641;
        background:var(--mist);color:#0F161A;font-family:'Geist',system-ui,sans-serif;line-height:1.4;
        border:1px solid var(--dust);border-radius:4px;padding:28px 30px;}
+     .drata .cust{height:32px;width:auto;max-width:200px;object-fit:contain;display:block;margin:0 0 14px;}
+     .drata .custname{font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--space);margin:0 0 14px;}
      .drata .eyebrow{font-family:'Geist Mono',monospace;font-weight:600;text-transform:uppercase;
        letter-spacing:.10em;font-size:12px;color:var(--muted);}
      .drata h1,.drata .head{font-weight:600;font-size:30px;letter-spacing:-.02em;margin:6px 0;}
@@ -107,7 +117,7 @@ Pick one to fix.
 
 ## The fixes
 1. **No artifact** — **no file upload exists in the MCP, ever — never promise one.** Per item:
-   link a `url` · link a Jira `ticket_url` (regex-validated) · request the file from its owner
+   link a `url` · link a ticketing `ticket_url` (regex-validated) · request the file from its owner
    (message drafted; delivered via the host's messaging tools, only on approval — say so if none
    exist) · or roll several file-bound items into one **upload
    checklist** for a single Drata-UI session (Evidence Library → item → New version).
@@ -139,7 +149,7 @@ Pick one to fix.
 - Suggestions and drafts are labeled *Calculated* and applied only after approval. Never invent an
   owner, control code, URL, or description. `name` lookups are a **PREFIX** match.
 - On request (not on the menu): create an item (needs `owner` + `renewal_schedule_type` — ask for
-  both in one round; `url` **or** `ticket_url`, at most one, or neither for a bucket record) ·
+  both in one round; `url` **or** `ticket_url`, at most one, or neither for an evidence item) ·
   retire an item (two-call delete: `confirm=false` preview → explicit approval → `confirm=true` →
   verify absence; irreversible, removes every version and linkage, never batched) · message an
   owner (draft shown; delivered via the host's messaging tools, only on approval — say so if none
@@ -151,4 +161,4 @@ Pick one to fix.
 - "Assign owners to the evidence that has none."
 - "Work through the expired evidence."
 - "Link the unmapped evidence to the right controls."
-- "Create evidence from this Jira ticket, owner alice@, annual renewal." *(direct — no menu)*
+- "Create evidence from this ticketing-system ticket, owner jane.doe@example.com, annual renewal." *(direct — no menu)*

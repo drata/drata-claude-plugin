@@ -2,23 +2,32 @@
 name: drata-executive-report
 description: >
   The stakeholder briefing: board, executive, audit-committee, or QBR view of live posture —
-  headline metrics, material changes, top risks — single workspace or org
-  roll-up with per-workspace scorecards and repeated-issue detection. Use for 'board deck
+  headline metrics, framework readiness, top risks — single workspace or org
+  roll-up with per-workspace scorecards and repeated-issue detection. Point-in-time only: Drata
+  exposes no history, so this reports where things stand today and never a trend or a change since
+  last period. Use for 'board deck
   numbers', 'exec summary of our compliance posture', multi-workspace roll-ups. Today's queue →
   drata-all-identify-gaps. Read-only.
 area: Reporting & Stakeholder Communications
 permission: read-only
-compatibility: "Requires Drata MCP with tools: Drata_listWorkspaces, Drata_searchControls, Drata_listRequirements, Drata_searchMonitoringTests, Drata_searchRisks, Drata_listVendors, Drata_searchPersonnelCompliance"
+compatibility: "Requires Drata MCP with tools: Drata_getCompany, Drata_listWorkspaces, Drata_searchControls, Drata_listRequirements, Drata_searchMonitoringTests, Drata_searchRisks, Drata_listVendors, Drata_searchPersonnelCompliance"
 ---
 
 **Shared protocols — load these from the plugin root, not the current directory.**
 
-1. **Rendering — branded, always. This is the default; never ask the user to pick an output mode.** Read `${CLAUDE_PLUGIN_ROOT}/shared/drata-brand-kit.md` and render every substantive deliverable (dashboard, report, briefing, gap worklist) in Drata branding: a self-contained HTML document using its §3 `.drata` theme. **Deliver it as HTML, always.** If the host has an artifact tool, render it there. If it does not, **write the complete HTML to a `.html` file and send that file** — every environment this runs in can deliver a file. **There is no markdown fallback.** Emitting the report as chat markdown, a bare table, or `###` headings is a failure of the deliverable, not a graceful degradation, and "the host had no artifact tool" is not a reason to do it. The only exception is the explicit text-only opt-out in rule 2. Match effort to the ask — short factual answers stay inline per §4. Two elements of a styled deliverable are a binding contract, even if the brand kit could not be read:
+1. **Rendering — branded, always. This is the default; never ask the user to pick an output mode.** Read `${CLAUDE_PLUGIN_ROOT}/shared/drata-brand-kit.md` and render every substantive deliverable (dashboard, report, briefing, gap worklist) in Drata branding: a self-contained HTML document using its §3 `.drata` theme. **Deliver it as HTML, always.** If the host has an artifact tool, render it there. If it does not, **write the complete HTML to a `.html` file and send that file** — every environment this runs in can deliver a file. **Name the file after this skill's folder, exactly: `<skill-name>-<scope>-<YYYY-MM-DD>.html` (e.g. `drata-framework-report-soc-2-2026-08-04.html`) — never a shortened or re-worded variant of the skill name, and never the artifact's display title.** **There is no markdown fallback.** Emitting the report as chat markdown, a bare table, or `###` headings is a failure of the deliverable, not a graceful degradation, and "the host had no artifact tool" is not a reason to do it. The only exception is the explicit text-only opt-out in rule 2. Match effort to the ask — short factual answers stay inline per §4. Two elements of a styled deliverable are a binding contract, even if the brand kit could not be read:
    - **Chart colors: Drata palette only, set explicitly in every chart config — never a library default.** First or single series `#2E4DFF`; multi-series ramp `#BEDAFF` → `#2E4DFF` → `#0F161A`; status tones `#00779C` pass / `#F2C14F` at-risk / `#D53641` fail, only on values that truly pass or fail; one `#FF410C` highlight per view at most; axis and label text `#828B8F`. Every heat map or matrix (risk 5×5, inherent × residual, any coverage grid) uses one band scale: low `#BEDAFF`, mid `#F2C14F`, high `#D53641`, at most one worst cell `#FF410C`.
-   - **Table hygiene:** one fact per cell — never a chip, code list and number together; never two categories slash-merged into one row. Numeric cells `class="num"`; codes `.code`, never wrapped. Chips mark real pass/fail only — a count like "2 of 5 mapped" stays neutral ink. No Status/severity/health column that only re-buckets a count. Commentary: last column, one sentence, only where it adds signal. **Caps: 6 columns, 15 rows.** Fold rank into the lead cell ("1 · Acme") or a metric pair into `9.1 (−7.3)`; drop the weakest column rather than cram. Past 15 rows show 15 and close with "13 more — full list on request". **Columns need the theme's `18px` right gutter** — override it to `padding:… 0` and a `.num` column collides with its neighbour, headers merging into `INTEGRATIONCONTROLSCODES`. Cells are top-aligned. Wrap every table in `<div class="panel">`. **KPI tiles are uniform or they are wrong.** Every tile in a row carries its denominator in the figure — full-size numerator, then `of N` in a muted `<span class="den">`. Always the word `of` — `55 of 241`. **Never `/`, never `X/Y`, never `55/241`**, anywhere a ratio appears: KPI tiles, bar labels, table cells, body text and headings all use `of`. This is the house standard across every skill; a slash in one report and `of` in the next is the inconsistency this rule exists to prevent. **Never move the denominator into the label** (`Controls not ready (of 622)`) — the label names what is counted and nothing else, phrased the same way on every tile. **Every tile in a row counts the same polarity**: choose healthy-of-total or needs-attention-of-total once and hold it across the row, so no reader has to work out that one figure is progress and its neighbour is a problem. A figure with no available denominator does not belong in the KPI row. Never invent a score scale Drata lacks — no 0–100 health score, no weighted total, no points column; rank on real Drata numbers.
+   - **Table hygiene:** one fact per cell — never a chip, code list and number together; never two categories slash-merged into one row. Numeric cells `class="num"`; codes `.code`, never wrapped. Chips mark real pass/fail only — a count like "2 of 5 mapped" stays neutral ink. No Status/severity/health column that only re-buckets a count. Commentary: last column, one sentence, only where it adds signal. **Caps: 6 columns, 15 rows.** Fold rank into the lead cell ("1 · Acme Corp") or a metric pair into `X.X (−Y.Y)`; drop the weakest column rather than cram. Past 15 rows show 15 and close with "13 more — full list on request". **Columns need the theme's `18px` right gutter** — override it to `padding:… 0` and a `.num` column collides with its neighbour, headers merging into `COLUMNACOLUMNB`. Cells are top-aligned. Wrap every table in `<div class="panel">`. **KPI tiles are uniform or they are wrong.** Every tile in a row carries its denominator in the figure — full-size numerator, then `of N` in a muted `<span class="den">`. Always the word `of` — `N of M`. **Never `/`, never `X/Y`, never `N/M`**, anywhere a ratio appears: KPI tiles, bar labels, table cells, body text and headings all use `of`. This is the house standard across every skill; a slash in one report and `of` in the next is the inconsistency this rule exists to prevent. **Never move the denominator into the label** (`Controls not ready (of M)`) — the label names what is counted and nothing else, phrased the same way on every tile. **Every tile in a row counts the same polarity**: choose healthy-of-total or needs-attention-of-total once and hold it across the row, so no reader has to work out that one figure is progress and its neighbour is a problem. A figure with no available denominator does not belong in the KPI row. Never invent a score scale Drata lacks — no 0–100 health score, no weighted total, no points column; rank on real Drata numbers.
    - **The Output format section defines content and order, never the medium.** In branded HTML its headings become styled sections, its `>` blocks become rows, its tables become real `<table>` markup — never raw markdown inside an artifact. The last content block runs straight into the footer hairline — no trailing recap, `Go deeper`, `Onward`, methodology, caps, or source-label block.
    - **The footer carries the Drata icon — paste this exact SVG inline** (color `#0F161A` on light surfaces, `#fff` on dark; never an image path, emoji, or substitute glyph): `<span class="logo"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 180.207 130.069" fill="none" role="img" aria-label="Drata"><path d="M 103.38 0 C 148.015 0.025 180.207 25.601 180.207 65.121 C 180.182 104.616 147.966 130.119 103.331 130.069 L 48.81 130.069 L 48.785 130.045 L 83.338 98.542 L 101.782 98.542 C 126.645 98.566 146.073 88.901 146.098 65.071 C 146.122 41.241 126.694 31.552 101.831 31.552 L 83.411 31.552 C 83.316 31.464 49.165 -0.038 48.859 0.246 C 48.859 0.246 48.859 0.021 48.859 0 L 103.38 0 Z M 48.718 30.791 C 58.604 45.595 71.908 55.875 88.409 61.9 L 97.386 65.023 L 88.385 68.122 C 71.883 74.123 59.316 84.403 48.668 99.183 C 38.782 84.378 25.478 74.098 8.977 68.073 L 0 64.95 L 9.001 61.852 C 25.502 55.851 38.832 45.571 48.718 30.791 Z" fill="currentColor" fill-rule="nonzero"/></svg></span>`
-   - **Structure:** customer identity → Title → source line (`Pulled from Drata · <timestamp> · <workspace>`) → hairline → KPI row → real `<table>` markup → footer. **The footer is exactly `<div class="foot"><span class="logo">[icon SVG]</span></div>` and nothing else** — no wordmark, tagline, product name, permission label, workspace, timestamp, chrome, caption, link or routing line. The header is the customer's identity; the Drata mark never goes there.
+   - **Header identity — the customer's logo, top-left, only when it can truly be inlined; else the company name as text.** Call `Drata_getCompany` once per run before rendering (account-scoped, no arguments, read-only; batch it with the run's other independent reads). It returns `name`, `legalName` and `logoUrl`. Resolve the header in this order and stop at the first that succeeds:
+     1. **Inlined logo — gate first, then fetch, then verify.** Attempt this step only if `logoUrl` is non-empty **and** the host provides a tool that can actually download raw image bytes from an arbitrary URL. Many sandboxed hosts — including Claude's cloud / Cowork environments — forbid fetching arbitrary CDN URLs, and the Drata image CDN additionally refuses generic fetchers; **in those hosts this step fails immediately and silently, and falling through to the name is the designed outcome, not a degraded render.** Where a download is possible: fetch once (no retries, no proxies, no cache mirrors, never a route around a refusal), verify the bytes decode as a real image (image magic bytes, mime `image/*`, non-zero size), base64-encode **those downloaded bytes with a real encoder in this run**, and emit `<img class="cust" src="data:[mime];base64,[data]" alt="[company name]" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="custname" style="display:none">[company name]</div>`. **Never type, reconstruct, or approximate base64 from memory — fabricated image data renders a broken or wrong mark exactly where the customer's identity belongs.** If any part of this step cannot be completed and verified, it did not succeed.
+     2. **Company name as text.** `<div class="custname">[company name]</div>` — used whenever `logoUrl` is absent or empty, no permitted fetch path exists in this host, the fetch fails or is refused, the bytes are not a decodable image, or the base64 cannot be produced from real downloaded bytes. **This fallback is first-class: a report headed by the company's name in clean type is a correct header; a broken image, an empty header, or invented image data is the only failure.**
+     **Never emit `<img src="https://…">`.** A remote reference is not an acceptable third option: artifact sandboxes block external images, and a blocked, expired or access-controlled URL renders a broken-image icon exactly where the customer's identity belongs. It is a verified inlined image or it is the name — nothing in between.
+     **When the logo renders, the company name does not appear as visible text** — it lives in the `alt` attribute and in the hidden `onerror` fallback `<div>`, which stays invisible unless the image fails to decode; that hidden div is the safety net, not a second header.
+     **Proportions: constrain the height, leave the width free.** `height:32px; width:auto; max-width:200px; object-fit:contain` — a wide wordmark and a square icon then share one baseline with no stretching, squashing or cropping. **Never set `height` and `width` together, never `width:100%`, never a fixed pixel width**, and never re-encode the image to a different aspect ratio. If a logo would exceed `max-width` at 32px tall, `object-fit:contain` shrinks it proportionally — that is correct, do not compensate.
+     On the dark board/exec surface, an inlined dark-on-transparent logo disappears; use `<div class="custname" style="color:#fff">[company name]</div>` instead rather than shipping an invisible mark.
+   - **Structure:** customer identity → Title → source line (`Pulled from Drata · <timestamp> · <workspace name>`) → hairline → KPI row → real `<table>` markup → footer. **The footer is exactly `<div class="foot"><span class="logo">[icon SVG]</span></div>` and nothing else** — no wordmark, tagline, product name, permission label, workspace, timestamp, chrome, caption, link or routing line. The header is the customer's identity; the Drata mark never goes there. **The source line always spells the scope out in full** — the workspace's own name, or `All workspaces` for an org roll-up covering more than one. Never omit it, never abbreviate it, never substitute a workspace id or a slug, and never leave it to be inferred from the title.
    - **No opinions, no predictions, no verdicts.** Report what Drata records and what you counted from it. **Never predict what an auditor will ask for, flag, or accept**; never label a gap *critical*, *significant*, *likely finding*, or *high risk* on your own authority; never size effort (S/M/L, hours, weeks) or estimate a date; never declare anything *audit-ready*, *compliant*, *certification-ready*, or *passing*; never interpret what a regulation or clause requires. Drata's own fields — `is_ready`, statuses, scores, dates, counts — are reportable as-is; ordering rows by those real numbers is fine, and a derived figure is labelled *Calculated*. **A reader must be able to act on this report without inheriting a judgement you made up.** If a sentence would not survive an auditor asking "where in Drata does that come from?", cut it.
    - **The artifact title names this skill's job, and no other skill's.** Title it after what this skill produces — an executive report says `Executive Report`, a gap worklist names the gaps it covers. **Never borrow a generic label like `Compliance Briefing`**: two skills wearing one title leaves the reader unable to tell which one they ran, and it collides with any similarly named skill the user has installed. Scope and date follow the title; nothing else does.
    - **Never emit a section you did not populate.** No placeholder heading, no "not included in this run", no "ask and I'll add it" offer, no note explaining which figures were not pulled. Either pull the data and render the section, or leave the section out entirely — a heading whose body apologises for itself costs the reader attention and returns nothing. The only disclosure that stays is a domain the skill *tried* to read and could not (permission denied), which is reported as one line, not a section. **Never explain what Drata does not store.** No "Drata has no asset object", no "there is no review-date field", no "the API does not expose X" — the absence of a field is your constraint while building, never a sentence in the deliverable. Where a field genuinely does not exist, answer with the nearest real Drata data, name it for what it actually is, and label it *Calculated* if you derived it; say nothing about the field you wanted and did not find. The reader came for their compliance posture, not for a tour of the data model.
@@ -34,6 +43,8 @@ compatibility: "Requires Drata MCP with tools: Drata_listWorkspaces, Drata_searc
        --positive:#00779C;--warning:#F2C14F;--negative:#D53641;
        background:var(--mist);color:#0F161A;font-family:'Geist',system-ui,sans-serif;line-height:1.4;
        border:1px solid var(--dust);border-radius:4px;padding:28px 30px;}
+     .drata .cust{height:32px;width:auto;max-width:200px;object-fit:contain;display:block;margin:0 0 14px;}
+     .drata .custname{font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--space);margin:0 0 14px;}
      .drata .eyebrow{font-family:'Geist Mono',monospace;font-weight:600;text-transform:uppercase;
        letter-spacing:.10em;font-size:12px;color:var(--muted);}
      .drata h1,.drata .head{font-weight:600;font-size:30px;letter-spacing:-.02em;margin:6px 0;}
@@ -98,7 +109,7 @@ defensible, and label every number. Read-only.
 
 **1. RESOLVE SCOPE FIRST.** Call `Drata_listWorkspaces()` before any domain read, and **page it to
 completion** — an account may hold more workspaces than one response returns. **The source line
-states how many were covered out of how many exist** (`Org roll-up: 3 of 3 workspaces`). Never
+states how many were covered out of how many exist** (`Org roll-up: N of N workspaces`). Never
 sample workspaces silently, and never let a roll-up quietly cover a subset.
 - **One workspace** → single-workspace briefing. **Never mention the roll-up, multi-workspace comparison, or "other workspaces" at all** — to a single-workspace account that language is noise.
 - **Two or more** → ask once: this workspace, a named subset, or the org roll-up. Default to the roll-up when the user's words are org-level ("across all", "by business unit", "portfolio", "per product line", MSP framing).
@@ -111,15 +122,19 @@ about scope when two or more workspaces exist.
 server-side, so both numbers come back as one-row responses:
 ```
 # discovery + denominator, one call per tag per workspace, all in one parallel batch
-Drata_listRequirements(framework_tag=["<TAG>"], is_in_scope=true, size=1, include_total_count=true)
+Drata_listRequirements(workspace_id="<WS>", framework_tag=["<TAG>"], is_in_scope=true, size=1, include_total_count=true)
    → totalCount > 0 means the framework is in scope in that workspace; the count IS the denominator
 # numerator, only for tags that came back non-zero
-Drata_listRequirements(framework_tag=["<TAG>"], is_in_scope=true, is_ready=true, size=1, include_total_count=true)
+Drata_listRequirements(workspace_id="<WS>", framework_tag=["<TAG>"], is_in_scope=true, is_ready=true, size=1, include_total_count=true)
 ```
+**`workspace_id` is mandatory on both, exactly as in step 2** — "per workspace" is what makes these
+numbers mean anything, and a workspace-scoped call without it returns an `action_required` picker
+rather than data on a multi-workspace account. A response with no `totalCount` is a picker, not a
+zero: resend it with the workspace, never record it as "framework not in scope".
 **Sweep every tag, every time.** The batch must cover the whole enum below — not a shortlist of
 "likely" frameworks, not the ones you saw in another workspace. A tag you skip is a framework that
-silently disappears from the report. Tags are a fixed enum — CUSTOM, SOC_2, ISO27001, ISO270012022, ISO27701, ISO270172015, ISO270182019, ISO420012023, CCPA, GDPR, HIPAA, PCI, PCI4, SCF, NIST80053, NISTCSF, NISTCSF2, NISTAI, NIST800171, NIST800171R3, CMMC, MSSSPA, MSSSPA11, FFIEC, COBIT, SOX_ITGC, CCM, CYBER_ESSENTIALS, CYBER_ESSENTIALS_32, FEDRAMP, FEDRAMP20X, DRATA_ESSENTIALS, CIS8, HITRUST, DORA, NIS2, ESSENTIAL_EIGHT, NYDFS, TISAX.
-**Use these tags exactly.** An unrecognised tag returns **HTTP 400, not an empty result**, so a sweep with a guessed tag errors mid-batch instead of skipping. `ISO42001` is wrong — it is `ISO420012023`; `ISO27018` is `ISO270182019`. If a 400 comes back, read the enum out of the error message and retry rather than dropping the framework. **Never paginate
+silently disappears from the report. The tag list — CUSTOM, SOC_2, ISO27001, ISO270012022, ISO27701, ISO277012025, ISO270172015, ISO270182019, ISO270182025, ISO420012023, CCPA, CCPA2026, GDPR, HIPAA, PCI, PCI4, SCF, NIST80053, NISTCSF, NISTCSF2, NISTAI, NIST800171, NIST800171R3, CMMC, MSSSPA, MSSSPA11, FFIEC, COBIT, SOX_ITGC, CCM, CYBER_ESSENTIALS, CYBER_ESSENTIALS_32, FEDRAMP, FEDRAMP20X, DRATA_ESSENTIALS, CIS8, HITRUST, DORA, NIS2, ESSENTIAL_EIGHT, NYDFS, TISAX, CPS230, CYFUN, AIUC_1.
+**Use these tags exactly.** An unrecognised tag returns **HTTP 400, not an empty result**, so a sweep with a guessed tag errors mid-batch instead of skipping. `ISO42001` is wrong — it is `ISO420012023`; `ISO27018` is `ISO270182019`. If a 400 comes back, read the enum out of the error message and retry rather than dropping the framework. **The list is a starting set, not a closed enum — Drata adds frameworks, and a tag missing from it is not an error, just a framework that never gets probed.** If the user names a framework absent from the list, probe their term anyway and read the accepted values out of any 400 rather than reporting it out of scope. **Never paginate
 the requirements catalogue to derive this** — the payload carries long descriptions and the filters
 already do the counting. Readiness = ready ÷ in-scope, *Tool Calls* on both figures.
 
@@ -182,19 +197,18 @@ but sits under 3:1 contrast on white, which is exactly why the labels are mandat
 **1 · Workspace → frameworks → readiness.** The lead visual. One white `.panel` per workspace, its
 `.ws` header row carrying the workspace name and framework count; inside, **one progress bar per in-scope
 framework — every one of them, never a top-N**. The header count and the number of bars in that
-panel **must be the same number**; check it before rendering, because `4 FRAMEWORKS` above three
+panel **must be the same number**; check it before rendering, because `N FRAMEWORKS` above three
 bars is the report contradicting itself. If a panel genuinely has to be shortened, the header says
-so (`8 frameworks · 5 shown`) — but the default is show them all, **all on the same 0–100% scale** so frameworks compare across workspaces. Sort frameworks
+so (`N frameworks · M shown`) — but the default is show them all, **all on the same 0–100% scale** so frameworks compare across workspaces. Sort frameworks
 **worst readiness first** — the gap is the point. Each bar is an `.fw` block — its `.fwlab` label
-row over a `--dust` `.track` with a `--cobalt` `.fill`; a single series needs no legend because the label line carries `18 of 58 · 31%` in ink beside
+row over a `--dust` `.track` with a `--cobalt` `.fill`; a single series needs no legend because the label line carries `N of M · P%` in ink beside
 the framework name. Give the **single lowest-readiness framework in the whole report** the `.ember`
 fill — that is the one ember, and it should be the number the room talks about.
 
 This replaces the old per-workspace control-readiness bar and the Org summary table. Readiness here
 is **requirement-level** (`Drata_listRequirements` `is_ready`), which is what an auditor grades
 against. **If a control-level readiness figure also appears anywhere in the report, label both** —
-they use different denominators and will not match (one reference workspace read 19% control-based
-and 7.8% requirement-based on the same framework).
+they use different denominators and will not match (on one workspace the control-based and requirement-based figures differed by more than twofold on the same framework).
 
 **2 · Open risks by residual score — the 5×5 matrix.** Grid of `residualImpact` (rows 5→1) ×
 `residualLikelihood` (columns 1→5), built with the theme's `.m5` grid classes, each cell holding the
@@ -203,6 +217,18 @@ count using the brand band scale only: low `#BEDAFF`, mid `#F2C14F`, high `#D536
 single worst cell `#FF410C` — the one ember in this chart. Empty cells stay `--mist`.
 `impact`, `likelihood`, `score` and `residualScore` are real Drata fields, so the matrix invents
 nothing. **Never label the bands Critical / High / Medium / Low** — Drata gives numbers, not names.
+
+**This matrix needs its own pull — the step-2 top-risks call cannot populate it.** That call carries
+`inherent_score_gte=7` and is sorted and capped for a *list*; cells built from it are silently a
+high-inherent subset drawn from one page, presented as "open risks". Two independent errors in the
+same grid: a filtered population and a truncated one. So fetch the matrix separately —
+`Drata_searchRisks(risk_register_id=<each register>, status=["ACTIVE"], expand=["registers"], size=50)`,
+**paginated to the end**, with no score filter — and bucket `residualImpact` × `residualLikelihood`
+client-side. Label the count *Calculated*, state the population under the grid (`across [n] active
+risks in [registers]`), and reconcile: **the cells plus the risks carrying no residual pair must equal
+that population.** Risks with no residual scores are not a cell — say how many sat outside the grid
+rather than dropping them. If you cannot page the register, render no matrix; a partial grid reads as
+a complete one.
 
 **Two charts, no more.** Evidence-currency and policy-publication belong to drata-evidence-identify-gaps, not to a briefing. **No other charts.** No trend or quarter-over-quarter line — the MCP exposes no history, and a
 fabricated trend is the worst thing this report could do. No gauge or donut for a percentage a bar
@@ -223,13 +249,35 @@ catalogue — it is simply too heavy, and too easy to under-report, to belong in
 
 ### Readiness by framework
 **KPI row — every tile `X of Y`, same polarity across the row.** Match the bars below and count the
-healthy side: requirements ready of in-scope · controls ready of total · monitoring tests passing of
-total · personnel compliant of population. Never mix "ready" and "not ready" tiles in one row, and
-never park a denominator in a tile label.
+healthy side: requirements ready of in-scope · controls ready of in-scope · monitoring tests **not
+failing** of enabled Production · personnel **passing security training** of population. Never mix
+"ready" and "not ready" tiles in one row, and never park a denominator in a tile label.
+
+**Every tile must name exactly what its call measured — no tile may claim more than its filter.**
+Three of these are easy to overstate, and all three are wrong in a way a customer will catch:
+
+- **Monitoring.** The only pull is `check_result_status="FAILED"`, so the honest figure is *not
+  failing*, never *passing*: the non-FAILED remainder also contains `ERROR`, `DISABLED` and `UNUSED`
+  tests, and an errored test is broken tooling, not a passing control. The denominator is **enabled
+  Production** tests, which means the Code subtraction (`total − test_source=code`) applies here too,
+  on both the numerator and the denominator — the product's monitoring list shows Production only, so
+  a pooled figure visibly exceeds the customer's screen. If you are not prepared to run the paired
+  Code calls, drop the tile; do not ship a pooled one. Depth belongs to drata-monitoring-report.
+- **Personnel.** The only pull is `security_training=["FAIL"]`. That yields *passing security
+  training*, not *compliant* — compliance spans MFA, policy acceptance, background checks and
+  devices, and labelling one check as all of them is the single most misleading tile this report can
+  carry. Either title the tile for the one check, or facet the others and title it for what you
+  actually faceted.
+- **Controls.** The denominator is **in-scope** controls (`is_enabled` default True), not "total";
+  out-of-scope controls belong in no readiness denominator, and drata-control-report uses in-scope,
+  so "total" here would put the same tile at two different values in two skills.
+
+Where a tile cannot be sourced honestly, **omit the tile** — a four-tile row is not a requirement,
+and a mislabelled tile is worse than a missing one.
 
 Then **chart 1 — one panel per workspace, one bar per framework, worst first**. At most two
 sentences of prose; the bars carry it.
-Personnel compliant [N] of [M] · *Population: [_appliedEmploymentStatus, spelled out]*
+Personnel passing security training [N] of [M] · *Population: [_appliedEmploymentStatus, spelled out]*
 **Org-level (account-scoped, not per workspace):** vendors needing action [N] of
 [breakdown.current] — one figure for the whole account, counted once; a body line, never a tile
 in the KPI row.

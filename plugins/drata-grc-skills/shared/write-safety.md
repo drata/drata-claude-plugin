@@ -1,6 +1,6 @@
 # Shared Protocol — Write Safety
 
-**Every skill that writes to Drata (create / update / delete of controls, evidence, risks, vendors, personnel) MUST follow this protocol. It is an invariant, not an optional step.**
+**Every skill that writes to Drata (create / update / delete of controls, evidence, risks, vendors) MUST follow this protocol. It is an invariant, not an optional step.**
 
 ## The lifecycle
 
@@ -21,13 +21,25 @@ Analyze → Recommend → Preview exact diff → Confirm → Write → Read back
 
 ## Relationship fields REPLACE — they do not append
 
-Control owners/policies/requirements/tests, risk owners/reviewers/categories/controls, and evidence↔control mappings are **replacement** sets. "Set the owner to Alice" or "add Alice" must never be sent as `[Alice]` if that silently removes existing owners.
+Control owners/policies/requirements/tests, risk owners/reviewers/categories/controls, and evidence↔control mappings are **replacement** sets. "Set the owner to Jane Doe" or "add Jane Doe" must never be sent as `[Jane Doe]` if that silently removes existing owners.
 
 ```
 read current set → compute the full intended set (union/difference) → preview the complete replacement → confirm → write → verify
 ```
 
 If the user says "add X **without removing the current ones**," include the current members in the payload.
+
+## Batch writes — partial-failure contract
+
+A confirmed batch (cap 25 rows) is not one write. Rows are written **sequentially — writes never run in parallel** — and the first failed row **stops the batch**: do not attempt the remaining rows, do not roll back the rows already applied, and never re-send a row automatically.
+
+Once the last write attempt lands, run the read-back pass over every row already written **plus the failing row** — a stopped row's state is read, never assumed — then issue **one receipt partitioned into three lists**, each row named by ID/code:
+
+- **Applied** — written and verified: before→after, plus any field the API silently dropped (a silent drop is reported on its own row; it does not stop the batch).
+- **Failed** — the row that stopped the batch, with the API's error message **verbatim** and the row's verified current state.
+- **Not attempted** — every remaining row, unchanged.
+
+Rows already applied stay applied; reverting them is a new write cycle with its own preview and confirmation. **Resume by re-previewing, never by blind retry** — a row you have not read back is unknown, not un-written, so re-read current state for the failed and not-attempted rows, show a fresh diff, and take a new confirmation.
 
 ## Destructive operations (delete risk / evidence / vendor)
 

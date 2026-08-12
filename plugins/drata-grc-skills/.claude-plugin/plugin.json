@@ -1,7 +1,7 @@
 {
   "name": "drata-grc-skills",
-  "version": "3.8.6",
-  "description": "Drata GRC Skills \u2014 17 job-to-be-done skills plus a built-in help index (drata-help) over the Drata MCP, spanning audit readiness, controls, evidence, risk, third-party/vendor risk, workforce compliance, and stakeholder reporting. Every skill is named for the job: report to see it, identify-gaps to find what needs work, resolve-gaps to change it. Bring your own agent (Claude, ChatGPT, Cursor, Copilot).",
+  "version": "3.8.12",
+  "description": "Drata GRC Assistant \u2014 17 job-to-be-done skills plus a built-in help index (drata-help) over the Drata MCP, spanning audit readiness, controls, evidence, risk, third-party/vendor risk, workforce compliance, and stakeholder reporting. Every skill is named for the job: report to see it, identify-gaps to find what needs work, resolve-gaps to change it. Bring your own agent (Claude, ChatGPT, Cursor, Copilot).",
   "author": {
     "name": "Drata"
   },

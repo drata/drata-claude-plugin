@@ -1,4 +1,26 @@
-# Drata GRC Skills
+## What's new in 3.8.12
+
+- **Reports carry your company's identity.** The header now shows your organization's logo
+  where it can be retrieved, and your company name in clean type otherwise — both are
+  correct renderings, not a fallback and a failure.
+- **Predictable file names.** When a report is delivered as a file, it is named for the
+  skill, scope, and date (`drata-framework-report-soc-2-2026-08-04.html`), so a folder of
+  exports stays sortable and self-describing.
+- **Less to specify.** Framework reports select the framework or workspace automatically
+  when only one is in scope, instead of asking.
+- **Clearer evidence language.** Individual evidence records are now called "evidence
+  items" throughout; "bucket" refers only to the four workable categories. Previously a
+  library of 333 records could render as "333 buckets".
+- **Command descriptions match what each skill does.** Two descriptions promised output
+  their skills deliberately do not produce — a named per-person roster, and root-cause
+  analysis — which could route you to the wrong skill before it even loaded.
+- **Safer batch edits.** A batch write that fails partway now returns a receipt showing
+  what was applied, what failed, and what was not attempted, and re-previews the remainder
+  rather than retrying automatically.
+- **Monitoring figures are Production-only, reliably.** The Production/Code split is now
+  bound to a concrete value, so the subtraction cannot silently return the pooled figure.
+
+# Drata GRC Assistant
 
 **One Claude plugin. 17 job-to-be-done GRC skills + a built-in help index, over the Drata MCP. Bring your own agent — Claude, ChatGPT, Cursor, Copilot.**
 
@@ -20,15 +42,8 @@ GRC practitioners describe the job in plain language ("Drata, are we ready for o
 ## Install (Claude Code)
 
 ```bash
-/plugin marketplace add drata/drata-claude-plugin
+/plugin marketplace add drata/drata-grc-skills
 /plugin install drata-grc-skills@drata
-```
-
-Drata engineers can install the same plugin from the internal marketplace instead:
-
-```bash
-/plugin marketplace add drata/ai-plugins
-/plugin install drata-grc-skills@ai-plugins
 ```
 
 Then connect the Drata MCP via OAuth. The plugin ships **one** MCP server that defaults to the US host; pick your region with a single environment variable so the agent connects to exactly one endpoint (no phantom auth prompts for regions you aren't in):
@@ -52,6 +67,50 @@ Your access is the intersection of your granted OAuth scopes and your Drata role
 - **Output mode is a setting, not a question.** `userConfig.output_mode` (`styled` | `plain`) is set once in plugin settings and persists across sessions: `styled` renders deliverables as a designed Drata artifact, `plain` answers in chat markdown. Hosts without `AskUserQuestion` degrade gracefully to the configured default instead of blocking.
 - **Frameworks are references, not skills.** SOC 2, ISO 27001, NIST, HIPAA, PCI, ISO 42001, etc. are reference packs; the job is the same, the framework is a parameter.
 - **One look across all of them.** Every skill inherits the [Drata brand kit](shared/drata-brand-kit.md) — palette, Geist type, source chips (`Calculated` / `Tool Calls`), and a drop-in CSS theme — so outputs read as one Drata product.
+
+## What changed in 3.8.7
+
+**The header logo now falls back to the company name reliably. No naming, data, or output-contract changes beyond the header rule.**
+
+- **Root cause fixed.** 3.8.6 told every skill to fetch `logoUrl` and inline it as base64, falling back to the name "if the fetch fails" — but the hosts this plugin most runs in (Claude's cloud / Cowork sandboxes) forbid downloading from arbitrary CDNs, and Drata's image CDN additionally refuses generic fetchers via `robots.txt`. Step 1 could never legitimately succeed there, and a model pressed to "fetch and encode" with no fetch path could emit fabricated base64 or a remote URL instead of taking the fallback — a broken image exactly where the customer's identity belongs.
+- **The inline step is now gated, then verified.** The logo is attempted only when `logoUrl` is non-empty **and** the host can actually download raw image bytes; hosts that cannot fail the step immediately, by design. Where a download is possible: one fetch (no retries, no proxies, no routing around a refusal), the bytes must decode as a real image, and the base64 must come from a real encoder run over those downloaded bytes — **never typed, reconstructed, or approximated from memory.**
+- **The name fallback is first-class.** `logoUrl` absent, no fetch path, fetch refused, bytes not an image, or base64 unverifiable → `<div class="custname">[company name]</div>`. A report headed by the company's name in clean type is a correct header; a broken image, an empty header, or invented image data is the only failure.
+- **A safety net even on success.** The inlined `<img>` now carries `onerror` plus a hidden `.custname` div with the company name, so a data URI that still fails to decode in some viewer degrades to the name instead of a broken glyph. The hidden div stays invisible unless the image errors — the visible header remains logo *or* name, never both.
+- All 18 skills, the brand kit (§3), and `output-mode.md` were updated together; everything else is identical to 3.8.6.
+
+## What changed in 3.8.6
+
+**Every artifact now carries the customer's own logo, resolved from Drata.**
+
+- **`Drata_getCompany` supplies the header.** One account-scoped, read-only call per run — batched with the run's other independent reads — returns `name`, `legalName` and `logoUrl`. All 18 skills now declare it in `compatibility`.
+- **Logo top-left, inlined as base64.** The logo is fetched and embedded as a `data:` URI so the artifact stays self-contained — it survives being saved, emailed, and opened offline.
+- **Two outcomes, never three.** If there is no `logoUrl`, the fetch fails, or the bytes don't decode, the header falls back to the company name as text (`.custname`). **A remote `<img src="https://…">` is never emitted** — a blocked or access-controlled URL would put a broken-image icon exactly where the customer's identity belongs.
+- **The logo replaces the company name.** When the logo renders, the name appears only in `alt`, where it still reaches screen readers and any export that drops images.
+- **Proportions are guaranteed.** `height:32px; width:auto; max-width:200px; object-fit:contain` — height is fixed, width is free. Wordmarks, square icons and tall crests all sit on one baseline with no stretching or cropping; a logo wider than 6.25:1 is scaled down proportionally rather than distorted. Setting height and width together, `width:100%`, or a fixed pixel width is prohibited. On the dark board surface a dark-on-transparent logo is replaced by the name in white rather than shipped invisible.
+- **The scope is always spelled out.** Every source line ends with the workspace's own name, or `All workspaces` for an org roll-up — never omitted, abbreviated, or reduced to an id. The two risk skills name the register alongside the workspace.
+- **New theme classes `.cust` / `.custname`**, added to all 14 full themes and all 4 resolve-gaps mini themes, so batch previews and write receipts carry the same header.
+- **`drata-help` frontmatter corrected.** It no longer claims to make no MCP calls — it makes exactly one, `Drata_getCompany`, for the header, and reads no compliance data.
+
+## What changed in 3.8.5
+
+**Personal data and customer-identifying detail removed from every skill. No naming, branding, behavior or output-contract changes.**
+
+- **Personal data removed.** Every example person is now `John Doe` / `Jane Doe`, and every example address is an `@example.com` placeholder.
+- **Third-party brand names removed from example data.** Named vendors and integrations in illustrative prompts, tables and sample rows are now placeholders (`Acme Corp`, `Northwind`, `Globex`) or generic descriptions ("the ticketing system", "the cloud provider"). Framework names, Drata tool names, API fields and enum values are untouched.
+- **Measured tenant figures replaced with the lesson they taught.** Rules previously justified with production numbers now state the finding instead — "the API and the UI disagreed by a single control", "the majority of current vendors carry `impactLevel: UNSCORED`", "most failures were older than 90 days, with a long tail past a year". Every rule keeps its force; none of them reveals the size or health of a real estate.
+- **Sample markup uses placeholders.** KPI tiles, chart labels, table rows and bar widths in the render contracts are now `[N]` / `[M]` / `[P]%` with round proportions, instead of counts and percentages carried over from real runs.
+- **Sample scopes and labels genericized.** The sample department, register and category are now `dept-alpha`, `Register A` and `Category A`, the example workspace scope is `acme-corp`, and department-group examples use `dept-<name>` rather than a real department name.
+- **Internal source reference removed** from this README's 2.0 notes.
+
+Naming, the Drata brand kit, the palette, type, logo, voice, MCP wiring, every skill's logic, data sources and write-safety posture are all identical to 3.8.4.
+
+## What changed in 3.8.4
+
+**`drata-framework-report` readability and prompt-cost fixes, plus a house filename rule.**
+
+- **The requirement grid is now labelled.** Every tile carries its requirement code in 10px Geist Mono (ready = solid Cobalt, white code; not ready = white tile, dust border, muted code), rendered in code order so a reader can look up any requirement instead of counting anonymous squares. Above 120 requirements the ready tiles drop out and only the not-ready codes render — never a fallback to blank swatches. New `.rgrid` / `.rq` classes in the skill's theme, and a brand-kit rule that any per-record grid must name the record.
+- **No one-option pickers.** With exactly one in-scope framework in the workspace, the skill selects it and runs — no question, no yes/no confirmation. Same rule already applied to a single workspace and to `drata-risk-report`'s single register; the command stub and the skill's blocking gate now agree.
+- **Delivered `.html` files are named after the skill's folder**, exactly: `<skill-name>-<scope>-<YYYY-MM-DD>.html` (e.g. `drata-framework-report-soc-2-2026-08-04.html`). Shortened, re-worded, or display-title filenames are out; the rule lives in `output-mode.md` and in all 18 skills' render contracts and command stubs.
 
 ## What changed in 3.8.3
 
@@ -105,8 +164,8 @@ The grammar is now **`report`** to see it · **`identify-gaps`** to find what ne
 - `drata-instance-report` — dropped. Its KPI cards with inline bars moved to `drata-executive-report`; its control field-quality scorecard moved to `drata-control-triage`.
 - `drata-framework-overlap-triage` — dropped from the package.
 
-- `drata-questionnaire-report` — no backing in the GRC, Sales, or Bhavin source material. It is the one job with no underlying Drata object: the MCP exposes no questionnaire to read, answer, or submit, so the skill was pure synthesis over data other skills already return. Documented in `drata-help` under "Not a skill — just ask", pointing at the readiness, control and evidence skills for the substance.
-- `drata-policy-report` — policy Q&A is now a direct `Drata_searchPolicies` read documented in `drata-help`, not a skill. It has no backing in the GRC or Sales source material, and `searchPolicies` only reaches the *caller's own assigned policies* and requires OAuth — which serves the employee-self-service persona, not the GRC persona this plugin targets. Policy coverage moved into `drata-instance-report`.
+- `drata-questionnaire-report` — no backing in the source material. It is the one job with no underlying Drata object: the MCP exposes no questionnaire to read, answer, or submit, so the skill was pure synthesis over data other skills already return. Documented in `drata-help` under "Not a skill — just ask", pointing at the readiness, control and evidence skills for the substance.
+- `drata-policy-report` — policy Q&A is now a direct `Drata_searchPolicies` read documented in `drata-help`, not a skill. It has no backing in the source material, and `searchPolicies` only reaches the *caller's own assigned policies* and requires OAuth — which serves the employee-self-service persona, not the GRC persona this plugin targets. Policy coverage moved into `drata-instance-report`.
 24 skills became 21, and the naming became a rule rather than a habit: every skill is `drata-<domain>-<action>` with exactly one output contract.
 
 **Merged**
