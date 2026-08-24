@@ -8,7 +8,7 @@ description: >
   identify-gaps skill owns the ranked deep dive. Read-only.
 area: Start Here
 permission: read-only
-compatibility: "Requires Drata MCP with tools: Drata_getCompany, Drata_searchControls, Drata_searchMonitoringTests, Drata_searchRisks, Drata_listVendors, Drata_listEvidence, Drata_searchPersonnelCompliance, Drata_listWorkspaces"
+compatibility: "Requires Drata MCP with tools: Drata_getCompany, Drata_searchControls, Drata_searchMonitoringTests, Drata_searchRisks, Drata_listVendors, Drata_listEvidence, Drata_searchPersonnelCompliance, Drata_listPersonnel, Drata_listWorkspaces"
 ---
 
 **Shared protocols — load these from the plugin root, not the current directory.**
