@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "drata": {
-      "type": "http",
-      "url": "${DRATA_MCP_URL:-https://mcp.drata.com/mcp/}"
-    }
-  }
-}
