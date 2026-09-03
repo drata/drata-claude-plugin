@@ -1,0 +1,8 @@
+# Placeholder so plugins/ exists in the tree.
+#
+# Git cannot track an empty directory, and the promotion workflow in
+# drata/ai-plugins copies into plugins/<plugin> with `cp -R`, which creates the
+# plugin directory but not this parent. Without this file that first copy fails
+# with "cp: cannot create directory 'plugins/<plugin>': No such file or directory".
+#
+# Delete once a promoted plugin directory lives here.
