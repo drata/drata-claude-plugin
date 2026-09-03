@@ -10,6 +10,15 @@ Drata's official plugin marketplace for Claude and other MCP-compatible agents.
 
 ## Install
 
+From the Claude community marketplace (once the plugin is published there):
+
+```bash
+/plugin marketplace add anthropics/claude-plugins-community
+/plugin install drata-grc-skills@claude-community
+```
+
+Or install directly from this repository:
+
 ```bash
 /plugin marketplace add drata/drata-claude-plugin
 /plugin install drata-grc-skills@drata

@@ -1,3 +1,60 @@
+# Drata GRC Assistant
+
+**One Claude plugin. 17 job-to-be-done GRC skills + a built-in help index, over the Drata MCP. Bring your own agent — Claude, ChatGPT, Cursor, Copilot.**
+
+GRC practitioners describe the job in plain language ("Drata, are we ready for our SOC 2 audit?"); the assistant routes to the right skill and calls the live Drata MCP. No Drata UI, no tool names to memorize.
+
+## The skills, at a glance
+
+| Area | Skills |
+|---|---|
+| **Start Here** | `drata-all-identify-gaps` · `drata-help` |
+| **Compliance & Audit Readiness** | `drata-framework-report` · `drata-control-report` · `drata-control-identify-gaps` · `drata-control-resolve-gaps` ✎ · `drata-monitoring-report` · `drata-evidence-report` · `drata-evidence-identify-gaps` · `drata-evidence-resolve-gaps` ✎ |
+| **Risk Management** | `drata-risk-report` · `drata-risk-identify-gaps` · `drata-risk-resolve-gaps` ✎ |
+| **Third-Party & Vendor Risk** | `drata-vendor-report` · `drata-vendor-identify-gaps` ✎? · `drata-vendor-resolve-gaps` ✎ |
+| **Personnel & Access Compliance** | `drata-personnel-report` |
+| **Reporting & Stakeholder Comms** | `drata-executive-report` |
+
+`✎` = writes to Drata (always diff-previewed and confirmed). `✎?` = read-only apart from one optional, explicitly-confirmed write. Every skill maps to one or more of Drata's live MCP tools.
+
+## Install (Claude Code)
+
+From the Claude community marketplace (once the plugin is published there):
+
+```bash
+/plugin marketplace add anthropics/claude-plugins-community
+/plugin install drata-grc-skills@claude-community
+```
+
+Or install directly from Drata's marketplace:
+
+```bash
+/plugin marketplace add drata/drata-claude-plugin
+/plugin install drata-grc-skills@drata
+```
+
+Then connect the Drata MCP via OAuth. The plugin ships **one** MCP server that defaults to the US host; pick your region with a single environment variable so the agent connects to exactly one endpoint (no phantom auth prompts for regions you aren't in):
+
+| Region | Set `DRATA_MCP_URL` to |
+|---|---|
+| **US** (default) | *unset* — defaults to `https://mcp.drata.com/mcp/` |
+| **EU** | `https://mcp-euc1.drata.com/mcp/` |
+| **APAC** | `https://mcp-apse2.drata.com/mcp/` |
+
+Your access is the intersection of your granted OAuth scopes and your Drata role — write skills degrade gracefully to read-only when a scope is absent.
+
+## Design principles
+
+- **Jobs, not tools.** Areas mirror GRC workflow stages; a practitioner never needs to know a tool name.
+- **Named by the job — `report` · `identify-gaps` · `resolve-gaps`.** Every skill is `drata-<domain>-<action>`: `report` to see it, `identify-gaps` to find what needs work, `resolve-gaps` to change it.
+- **One skill, exactly one output contract.** A `report` returns a snapshot; an `identify-gaps` returns a ranked worklist; a `resolve-gaps` returns a confirmed write receipt. If a job would need two "Output format" blocks, it is two skills — so a read job and a write job are never the same skill, and reads and writes keep separate safety postures.
+- **Safety is an invariant.** Every write follows the [write-safety protocol](shared/write-safety.md): preview the exact diff → confirm → write → read back → verify. Deletes are two-step. Relationship fields *replace* rather than append, so the full intended set is previewed every time.
+- **Defensible by default.** Claims are labeled by source; a mapped control or a passing test is not, by itself, an attestation. There are no historical snapshots in the MCP, so no skill claims a trend. See [accuracy-and-sources](shared/accuracy-and-sources.md).
+- **Shared protocols resolve from the plugin root.** Skills reference `${CLAUDE_PLUGIN_ROOT}/shared/...` — never a bare relative `shared/...` — so output mode, brand kit, source labelling and write safety load correctly after a marketplace install, wherever the plugin lands on disk.
+- **Output mode is a setting, not a question.** `userConfig.output_mode` (`styled` | `plain`) is set once in plugin settings and persists across sessions: `styled` renders deliverables as a designed Drata artifact, `plain` answers in chat markdown. Hosts without `AskUserQuestion` degrade gracefully to the configured default instead of blocking.
+- **Frameworks are references, not skills.** SOC 2, ISO 27001, NIST, HIPAA, PCI, ISO 42001, etc. are reference packs; the job is the same, the framework is a parameter.
+- **One look across all of them.** Every skill inherits the [Drata brand kit](shared/drata-brand-kit.md) — palette, Geist type, source chips (`Calculated` / `Tool Calls`), and a drop-in CSS theme — so outputs read as one Drata product.
+
 ## What changed in 3.8.12
 
 Replaced the plugin body with the 3.8.7 build (2026-08-10), which is newer work than the
@@ -28,54 +85,6 @@ have reopened findings two reviewers already signed off:
 
 Version set to 3.8.12 rather than 3.8.7 so the two 3.8.x lineages cannot collide: the
 version is the promotion identity — branch name, public PR title, and install cache key.
-
-# Drata GRC Assistant
-
-**One Claude plugin. 17 job-to-be-done GRC skills + a built-in help index, over the Drata MCP. Bring your own agent — Claude, ChatGPT, Cursor, Copilot.**
-
-GRC practitioners describe the job in plain language ("Drata, are we ready for our SOC 2 audit?"); the assistant routes to the right skill and calls the live Drata MCP. No Drata UI, no tool names to memorize.
-
-## The skills, at a glance
-
-| Area | Skills |
-|---|---|
-| **Start Here** | `drata-all-identify-gaps` · `drata-help` |
-| **Compliance & Audit Readiness** | `drata-framework-report` · `drata-control-report` · `drata-control-identify-gaps` · `drata-control-resolve-gaps` ✎ · `drata-monitoring-report` · `drata-evidence-report` · `drata-evidence-identify-gaps` · `drata-evidence-resolve-gaps` ✎ |
-| **Risk Management** | `drata-risk-report` · `drata-risk-identify-gaps` · `drata-risk-resolve-gaps` ✎ |
-| **Third-Party & Vendor Risk** | `drata-vendor-report` · `drata-vendor-identify-gaps` ✎? · `drata-vendor-resolve-gaps` ✎ |
-| **Personnel & Access Compliance** | `drata-personnel-report` |
-| **Reporting & Stakeholder Comms** | `drata-executive-report` |
-
-`✎` = writes to Drata (always diff-previewed and confirmed). `✎?` = read-only apart from one optional, explicitly-confirmed write. Every skill maps to one or more of Drata's live MCP tools.
-
-## Install (Claude Code)
-
-```bash
-/plugin marketplace add drata/drata-claude-plugin
-/plugin install drata-grc-skills@drata
-```
-
-Then connect the Drata MCP via OAuth. The plugin ships **one** MCP server that defaults to the US host; pick your region with a single environment variable so the agent connects to exactly one endpoint (no phantom auth prompts for regions you aren't in):
-
-| Region | Set `DRATA_MCP_URL` to |
-|---|---|
-| **US** (default) | *unset* — defaults to `https://mcp.drata.com/mcp/` |
-| **EU** | `https://mcp-euc1.drata.com/mcp/` |
-| **APAC** | `https://mcp-apse2.drata.com/mcp/` |
-
-Your access is the intersection of your granted OAuth scopes and your Drata role — write skills degrade gracefully to read-only when a scope is absent.
-
-## Design principles
-
-- **Jobs, not tools.** Areas mirror GRC workflow stages; a practitioner never needs to know a tool name.
-- **Named by the job — `report` · `identify-gaps` · `resolve-gaps`.** Every skill is `drata-<domain>-<action>`: `report` to see it, `identify-gaps` to find what needs work, `resolve-gaps` to change it.
-- **One skill, exactly one output contract.** A `report` returns a snapshot; an `identify-gaps` returns a ranked worklist; a `resolve-gaps` returns a confirmed write receipt. If a job would need two "Output format" blocks, it is two skills — so a read job and a write job are never the same skill, and reads and writes keep separate safety postures.
-- **Safety is an invariant.** Every write follows the [write-safety protocol](shared/write-safety.md): preview the exact diff → confirm → write → read back → verify. Deletes are two-step. Relationship fields *replace* rather than append, so the full intended set is previewed every time.
-- **Defensible by default.** Claims are labeled by source; a mapped control or a passing test is not, by itself, an attestation. There are no historical snapshots in the MCP, so no skill claims a trend. See [accuracy-and-sources](shared/accuracy-and-sources.md).
-- **Shared protocols resolve from the plugin root.** Skills reference `${CLAUDE_PLUGIN_ROOT}/shared/...` — never a bare relative `shared/...` — so output mode, brand kit, source labelling and write safety load correctly after a marketplace install, wherever the plugin lands on disk.
-- **Output mode is a setting, not a question.** `userConfig.output_mode` (`styled` | `plain`) is set once in plugin settings and persists across sessions: `styled` renders deliverables as a designed Drata artifact, `plain` answers in chat markdown. Hosts without `AskUserQuestion` degrade gracefully to the configured default instead of blocking.
-- **Frameworks are references, not skills.** SOC 2, ISO 27001, NIST, HIPAA, PCI, ISO 42001, etc. are reference packs; the job is the same, the framework is a parameter.
-- **One look across all of them.** Every skill inherits the [Drata brand kit](shared/drata-brand-kit.md) — palette, Geist type, source chips (`Calculated` / `Tool Calls`), and a drop-in CSS theme — so outputs read as one Drata product.
 
 ## What changed in 3.8.7
 
