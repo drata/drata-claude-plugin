@@ -10,3 +10,14 @@
 # radius: there is no other team's code in this repository to slow down.
 
 * @drata/interface
+
+# Security-sensitive files: Security owns the controls, not the code they protect
+/.github/CODEOWNERS @drata/security-mergers
+/.llm/security/ @drata/security-mergers
+/SECURITY.md @drata/security-mergers
+/.github/dependabot.yml @drata/security-mergers
+/.github/workflows/security-*.yml @drata/security-mergers
+/.github/workflows/security-*.yaml @drata/security-mergers
+/.semgrep* @drata/security-mergers
+/.gitleaks* @drata/security-mergers
+/.socket* @drata/security-mergers
